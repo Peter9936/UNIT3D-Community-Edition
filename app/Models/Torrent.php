@@ -445,4 +445,28 @@ class Torrent extends Model
 
         return $this->free || config('other.freeleech') || $pfree;
     }
+
+    /**
+     * Get Parsed MediaInfo.
+     *
+     * @return array
+     */
+    public function getParsedMediaInfo() {
+      if ($this->mediainfo != null) {
+          $parser = new MediaInfo();
+          $mediaInfo['parsed'] = $parser->parse($this->mediainfo);
+          $mediaInfo['view_crumbs'] = $parser->prepareViewCrumbs($mediaInfo['parsed']);
+          $mediaInfo['general'] = $mediaInfo['parsed']['general'];
+          $mediaInfo['general_crumbs'] = $mediaInfo['view_crumbs']['general'];
+          $mediaInfo['video'] = $mediaInfo['parsed']['video'];
+          $mediaInfo['video_crumbs'] = $mediaInfo['view_crumbs']['video'];
+          $mediaInfo['settings'] = ($mediaInfo['parsed']['video'] !== null && isset($mediaInfo['parsed']['video'][0]) && isset($mediaInfo['parsed']['video'][0]['encoding_settings'])) ? $mediaInfo['parsed']['video'][0]['encoding_settings'] : null;
+          $mediaInfo['audio'] = $mediaInfo['parsed']['audio'];
+          $mediaInfo['audio_crumbs'] = $mediaInfo['view_crumbs']['audio'];
+          $mediaInfo['subtitle'] = $mediaInfo['parsed']['text'];
+          $mediaInfo['text_crumbs'] = $mediaInfo['view_crumbs']['text'];
+      }
+      return $mediaInfo;
+    }
+
 }

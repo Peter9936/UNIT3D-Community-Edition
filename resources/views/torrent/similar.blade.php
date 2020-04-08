@@ -63,7 +63,7 @@
                     <div class="movie-details">
                         <p class="movie-plot">{{ $meta->plot }}</p>
                         <strong>ID:</strong>
-    
+
                         <span class="badge-user"><a href="https://www.imdb.com/title/{{ $meta->imdb }}"
                                 target="_blank">{{ $meta->imdb }}</a></span>
                         @if ($torrents->first()->category_id == "2" && $torrents->first()->tmdb != 0 &&
@@ -131,10 +131,79 @@
                                         </span>
                                     </div>
                                 </td>
-        
+
                                 <td>
-                                    <a class="view-torrent" href="{{ route('torrent', ['id' => $torrent->id]) }}">
-                                        {{ $torrent->name }}
+                                    <a class="view-torrent" href="{{ route('torrent', ['id' => $torrent->id]) }}" data-toggle="tooltip" data-original-title="{{$torrent->name}}">
+
+                                      @if(!empty($torrent->mediainfo))
+                                        @php $parsedMediaInfo = $torrent->getParsedMediaInfo() @endphp
+                                      @else
+                                        @php $parsedMediaInfo = null @endphp
+                                      @endif
+
+
+                                      @if(in_array($torrent->type, [ 'UHD-100','UHD-66','UHD-50', 'BD50','BD25' ]))
+                                        {{ $torrent->type }}
+                                      @else
+                                        @if(strpos(Arr::get($parsedMediaInfo,'video.0.writing_library'), 'x265') !== false)
+                                          x265
+                                        @elseif(strpos(Arr::get($parsedMediaInfo,'video.0.writing_library'), 'x264') !== false)
+                                          x264
+                                        @elseif(strpos(Arr::get($parsedMediaInfo,'video.0.format'), 'VC-1') !== false)
+                                          VC-1
+                                        @elseif(strpos(Arr::get($parsedMediaInfo,'video.0.format_profile'), 'High@L4.1') !== false || strpos(Arr::get($parsedMediaInfo,'video.0.format_profile'), 'High@L4') !== false)
+                                          H.264
+                                        @elseif(strpos(Arr::get($parsedMediaInfo,'video.0.format_profile'), 'Main 10@L5.1@High') !== false)
+                                          H.265
+                                        @endif
+                                      @endif
+
+                                      /
+
+                                      @if(strpos(Arr::get($parsedMediaInfo,'general.format'), 'MPEG-4') !== false)
+                                        MP4
+                                      @elseif(strpos(Arr::get($parsedMediaInfo,'general.format'), 'Matroska') !== false)
+                                        MKV
+                                      @elseif(in_array($torrent->type, [ 'UHD-100','UHD-66','UHD-50', 'BD50','BD25' ]))
+                                        m2ts
+                                      @endif
+
+                                      /
+
+                                      {{ $torrent->type }}
+
+                                      /
+
+                                      Resolution
+
+                                      @php $atmos_track = false; @endphp
+                                      @if(!empty(Arr::get($parsedMediaInfo,'audio',[])))
+                                        @foreach(Arr::get($parsedMediaInfo,'audio',[]) as $audio_track)
+                                          @if(strpos(Arr::get($audio_track,'codec'), 'A_TRUEHD') !== false && strpos(Arr::get($audio_track,'channels'), '8ch') !== false)
+                                            @php $atmos_track = true; @endphp
+                                          @endif
+                                        @endforeach
+                                      @endif
+
+                                      @if($atmos_track == true)
+                                        /
+                                        Dolby Atmos
+                                      @endif
+
+                                      @php $video_hdr = false; @endphp
+
+                                      @foreach(Arr::get($parsedMediaInfo,'video',[]) as $video_track)
+                                        @if(strpos(Arr::get($video_track,'title'), 'BT.2020') !== false)
+                                          @php $video_hdr = true; @endphp
+                                        @endif
+                                      @endforeach
+
+                                      @if($video_hdr == true)
+                                        /
+                                        HDR
+                                      @endif
+
+
                                     </a>
                                     @if (config('torrent.download_check_page') == 1)
                                         <a href="{{ route('download_check', ['id' => $torrent->id]) }}">
@@ -151,7 +220,7 @@
                                             </button>
                                         </a>
                                     @endif
-        
+
                                     @php $history = \App\Models\History::where('user_id', '=', $user->id)->where('info_hash',
                                     '=', $torrent->info_hash)->first(); @endphp
                                     @if ($history)
@@ -161,21 +230,21 @@
                                                 <i class="{{ config('other.font-awesome') }} fa-arrow-up"></i>
                                             </button>
                                         @endif
-            
+
                                         @if ($history->seeder == 0 && $history->active == 1)
                                             <button class="btn btn-warning btn-circle" type="button" data-toggle="tooltip"
                                                 data-original-title="@lang('torrent.currently-leeching')!">
                                                 <i class="{{ config('other.font-awesome') }} fa-arrow-down"></i>
                                             </button>
                                         @endif
-            
+
                                         @if ($history->seeder == 0 && $history->active == 0 && $history->completed_at == null)
                                             <button class="btn btn-info btn-circle" type="button" data-toggle="tooltip"
                                                 data-original-title="@lang('torrent.not-completed')!">
                                                 <i class="{{ config('other.font-awesome') }} fa-spinner"></i>
                                             </button>
                                         @endif
-            
+
                                         @if ($history->seeder == 0 && $history->active == 0 && $history->completed_at != null)
                                             <button class="btn btn-danger btn-circle" type="button" data-toggle="tooltip"
                                                 data-original-title="@lang('torrent.completed-not-seeding')!">
@@ -183,8 +252,43 @@
                                             </button>
                                         @endif
                                     @endif
-        
+
                                     <br>
+
+                                    @if(!empty(Arr::get($parsedMediaInfo,'audio',[])))
+                                      <span>Audio:</span>
+                                      @php $audio_array = array() @endphp
+
+                                      @foreach(Arr::get($parsedMediaInfo,'audio',[]) as $audio_track)
+                                        @php $audio_array[] = getLanguageFlag(Arr::get($audio_track, 'language','')) @endphp
+                                      @endforeach
+
+                                      @php $audio_array = array_unique($audio_array) @endphp
+
+                                      @foreach($audio_array as $audio_track)
+                                      <img src="{{ $audio_track }}" alt="{{ $audio_track }}"
+                                      width="20" height="13" data-toggle="tooltip" data-original-title="{{ $audio_track }}">
+                                      @endforeach
+                                    @endif
+
+                                    @if(!empty(Arr::get($parsedMediaInfo,'subtitle',[])))
+                                      <span class="ml-3">Subtitles:</span>
+                                      @php $subtitle_array = array() @endphp
+
+                                      @foreach(Arr::get($parsedMediaInfo,'subtitle',[]) as $subtitle_track)
+                                        @php $subtitle_array[] = getLanguageFlag(Arr::get($subtitle_track, 'language','')) @endphp
+                                      @endforeach
+
+                                      @php $subtitle_array = array_unique($subtitle_array) @endphp
+
+                                      @foreach($subtitle_array as $subtitle_track)
+                                        <img src="{{ $subtitle_track }}" alt="{{ $subtitle_track }}"
+                                        width="20" height="13" data-toggle="tooltip" data-original-title="{{ $subtitle_track }}">
+                                      @endforeach
+                                    @endif
+
+                                    <br>
+
                                     @if ($torrent->anon == 1)
                                         <span class="badge-extra text-bold">
                                             <i class="{{ config('other.font-awesome') }} fa-upload" data-toggle="tooltip"
@@ -204,50 +308,19 @@
                                             </a>
                                         </span>
                                     @endif
-        
-                                    @if (! $torrent->category->no_meta)
-                                        @if ($user->ratings == 1)
-                                            <a href="https://www.imdb.com/title/tt{{ $torrent->imdb }}" target="_blank">
-                                                <span class="badge-extra text-bold">
-                                                    <span class="text-gold movie-rating-stars">
-                                                        <i class="{{ config('other.font-awesome') }} fa-thumbs-up" data-toggle="tooltip"
-                                                            data-original-title="@lang('torrent.view-more')"></i>
-                                                    </span>
-                                                    {{ $meta->imdbRating }}/10 ({{ $meta->imdbVotes }} @lang('torrent.votes'))
-                                                </span>
-                                            </a>
-                                        @else
-                                            @if ($torrent->category->tv_meta)
-                                                <a href="https://www.themoviedb.org/tv/{{ $meta->tmdb }}?language={{ config('app.locale') }}"
-                                                    target="_blank">
-                                                @else
-                                                    <a href="https://www.themoviedb.org/movie/{{ $meta->tmdb }}?language={{ config('app.locale') }}"
-                                                        target="_blank">
-                                                    @endif
-                                                    <span class="badge-extra text-bold">
-                                                        <span class="text-gold movie-rating-stars">
-                                                            <i class="{{ config('other.font-awesome') }} fa-thumbs-up"
-                                                                data-toggle="tooltip"
-                                                                data-original-title="@lang('torrent.view-more')"></i>
-                                                        </span>
-                                                        {{ $meta->tmdbRating }}/10 ({{ $meta->tmdbVotes }} @lang('torrent.votes'))
-                                                    </span>
-                                                </a>
-                                            @endif
-                                        @endif
-        
+
                                         <span class="badge-extra text-bold text-pink">
                                             <i class="{{ config('other.font-awesome') }} fa-heart" data-toggle="tooltip"
                                                 data-original-title="@lang('torrent.thanks-given')"></i>
                                             {{ $torrent->thanks_count }}
                                         </span>
-        
+
                                         <span class="badge-extra text-bold text-green">
                                             <i class="{{ config('other.font-awesome') }} fa-comment" data-toggle="tooltip"
                                                 data-original-title="@lang('common.comments')"></i>
                                             {{ $torrent->comments_count }}
                                         </span>
-        
+
                                         @if ($torrent->internal == 1)
                                             <span class='badge-extra text-bold'>
                                                 <i class='{{ config('other.font-awesome') }} fa-magic' data-toggle='tooltip'
@@ -255,7 +328,7 @@
                                                     style="color: #baaf92;"></i> @lang('torrent.internal')
                                             </span>
                                         @endif
-        
+
                                         @if ($torrent->stream == 1)
                                             <span class='badge-extra text-bold'>
                                                 <i class='{{ config('other.font-awesome') }} fa-play text-red' data-toggle='tooltip'
@@ -263,7 +336,7 @@
                                                 @lang('torrent.stream-optimized')
                                             </span>
                                         @endif
-        
+
                                         @if ($torrent->featured == 0)
                                             @if ($torrent->doubleup == 1)
                                                 <span class='badge-extra text-bold'>
@@ -280,7 +353,7 @@
                                                 </span>
                                             @endif
                                         @endif
-        
+
                                         @if ($personal_freeleech)
                                             <span class='badge-extra text-bold'>
                                                 <i class='{{ config('other.font-awesome') }} fa-id-badge text-orange'
@@ -288,7 +361,7 @@
                                                     torrent.personal-freeleech')'></i> @lang('torrent.personal-freeleech')
                                             </span>
                                         @endif
-        
+
                                         @php $freeleech_token = \App\Models\FreeleechToken::where('user_id', '=',
                                         $user->id)->where('torrent_id', '=', $torrent->id)->first(); @endphp
                                         @if ($freeleech_token)
@@ -298,7 +371,7 @@
                                                     torrent.freeleech-token')'></i> @lang('torrent.freeleech-token')
                                             </span>
                                         @endif
-        
+
                                         @if ($torrent->featured == 1)
                                             <span class='badge-extra text-bold' style='background-image:url(/img/sparkels.gif);'>
                                                 <i class='{{ config('other.font-awesome') }} fa-certificate text-pink'
@@ -306,7 +379,7 @@
                                                     torrent.featured')'></i> @lang('torrent.featured')
                                             </span>
                                         @endif
-        
+
                                         @if ($user->group->is_freeleech == 1)
                                             <span class='badge-extra text-bold'>
                                                 <i class='{{ config('other.font-awesome') }} fa-trophy text-purple'
@@ -314,7 +387,7 @@
                                                     torrent.special-freeleech')'></i> @lang('torrent.special-freeleech')
                                             </span>
                                         @endif
-        
+
                                         @if (config('other.freeleech') == 1)
                                             <span class='badge-extra text-bold'>
                                                 <i class='{{ config('other.font-awesome') }} fa-globe text-blue'
@@ -322,7 +395,7 @@
                                                     torrent.global-freeleech')'></i> @lang('torrent.global-freeleech')
                                             </span>
                                         @endif
-        
+
                                         @if (config('other.doubleup') == 1)
                                             <span class='badge-extra text-bold'>
                                                 <i class='{{ config('other.font-awesome') }} fa-globe text-green'
@@ -338,7 +411,7 @@
                                                     torrent.special-double_upload')'></i> @lang('torrent.special-double_upload')
                                             </span>
                                                     @endif
-        
+
                                         @if ($torrent->leechers >= 5)
                                             <span class='badge-extra text-bold'>
                                                 <i class='{{ config('other.font-awesome') }} fa-fire text-orange'
@@ -346,7 +419,7 @@
                                                 @lang('common.hot')!
                                             </span>
                                         @endif
-        
+
                                         @if ($torrent->sticky == 1)
                                             <span class='badge-extra text-bold'>
                                                 <i class='{{ config('other.font-awesome') }} fa-thumbtack text-black'
@@ -354,7 +427,7 @@
                                                     torrent.sticky')!'></i> @lang('torrent.sticky')
                                             </span>
                                         @endif
-        
+
                                         @if ($user->updated_at->getTimestamp() < $torrent->created_at->getTimestamp())
                                                 <span class='badge-extra text-bold'>
                                                     <i class='{{ config('other.font-awesome') }} fa-magic text-black'
@@ -362,7 +435,7 @@
                                                         common.new')!'></i> @lang('common.new')
                                                 </span>
                                             @endif
-        
+
                                             @if ($torrent->highspeed == 1)
                                                 <span class='badge-extra text-bold'>
                                                     <i class='{{ config('other.font-awesome') }} fa-tachometer text-red'
@@ -370,7 +443,7 @@
                                                         common.high-speeds')'></i> @lang('common.high-speeds')
                                                 </span>
                                             @endif
-        
+
                                             @if ($torrent->sd == 1)
                                                 <span class='badge-extra text-bold'>
                                                     <i class='{{ config('other.font-awesome') }} fa-ticket text-orange'
@@ -379,7 +452,7 @@
                                                 </span>
                                             @endif
                                 </td>
-        
+
                                 <td>
                                     <time>{{ $torrent->created_at->diffForHumans() }}</time>
                                 </td>

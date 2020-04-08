@@ -141,7 +141,7 @@ class TorrentController extends Controller
             ->withCount(['thanks', 'comments'])
             ->where('category_id', '=', $category_id)
             ->where('tmdb', '=', $tmdb)
-            ->latest()
+            ->orderBy('size', 'asc')
             ->get();
 
         if (!$torrents || $torrents->count() < 1) {
@@ -945,32 +945,18 @@ class TorrentController extends Controller
 
         $featured = $torrent->featured == 1 ? FeaturedTorrent::where('torrent_id', '=', $id)->first() : null;
 
-        $general = null;
-        $video = null;
-        $settings = null;
-        $audio = null;
-        $general_crumbs = null;
-        $text_crumbs = null;
-        $subtitle = null;
-        $view_crumbs = null;
-        $video_crumbs = null;
-        $settings = null;
-        $audio_crumbs = null;
-        $subtitle = null;
-        $subtitle_crumbs = null;
-        if ($torrent->mediainfo != null) {
-            $parser = new MediaInfo();
-            $parsed = $parser->parse($torrent->mediainfo);
-            $view_crumbs = $parser->prepareViewCrumbs($parsed);
-            $general = $parsed['general'];
-            $general_crumbs = $view_crumbs['general'];
-            $video = $parsed['video'];
-            $video_crumbs = $view_crumbs['video'];
-            $settings = ($parsed['video'] !== null && isset($parsed['video'][0]) && isset($parsed['video'][0]['encoding_settings'])) ? $parsed['video'][0]['encoding_settings'] : null;
-            $audio = $parsed['audio'];
-            $audio_crumbs = $view_crumbs['audio'];
-            $subtitle = $parsed['text'];
-            $text_crumbs = $view_crumbs['text'];
+        if (!empty($torrent->mediainfo)) {
+            $parsedMediaInfo = $torrent->getParsedMediaInfo();
+        } else {
+            $parsedMediaInfo['general'] = null;
+            $parsedMediaInfo['general_crumbs'] = null;
+            $parsedMediaInfo['video_crumbs'] = null;
+            $parsedMediaInfo['audio_crumbs'] = null;
+            $parsedMediaInfo['text_crumbs'] = null;
+            $parsedMediaInfo['video'] = null;
+            $parsedMediaInfo['audio'] = null;
+            $parsedMediaInfo['subtitle'] = null;
+            $parsedMediaInfo['settings'] = null;
         }
 
         $playlists = $user->playlists;
@@ -987,15 +973,15 @@ class TorrentController extends Controller
             'user_tips'          => $user_tips,
             'client'             => $client,
             'featured'           => $featured,
-            'general'            => $general,
-            'general_crumbs'     => $general_crumbs,
-            'video_crumbs'       => $video_crumbs,
-            'audio_crumbs'       => $audio_crumbs,
-            'text_crumbs'        => $text_crumbs,
-            'video'              => $video,
-            'audio'              => $audio,
-            'subtitle'           => $subtitle,
-            'settings'           => $settings,
+            'general'            => $parsedMediaInfo['general'],
+            'general_crumbs'     => $parsedMediaInfo['general_crumbs'],
+            'video_crumbs'       => $parsedMediaInfo['video_crumbs'],
+            'audio_crumbs'       => $parsedMediaInfo['audio_crumbs'],
+            'text_crumbs'        => $parsedMediaInfo['text_crumbs'],
+            'video'              => $parsedMediaInfo['video'],
+            'audio'              => $parsedMediaInfo['audio'],
+            'subtitle'           => $parsedMediaInfo['subtitle'],
+            'settings'           => $parsedMediaInfo['settings'],
             'uploader'           => $uploader,
             'last_seed_activity' => $last_seed_activity,
             'playlists'          => $playlists,
@@ -1180,7 +1166,7 @@ class TorrentController extends Controller
             foreach ($v->errors()->all() as $error) {
                 $errors .= $error."\n";
             }
-            \Log::notice(sprintf('Deletion of torrent failed due to: 
+            \Log::notice(sprintf('Deletion of torrent failed due to:
 
 %s', $errors));
 
@@ -1736,4 +1722,6 @@ class TorrentController extends Controller
         return redirect()->route('torrent', ['id' => $torrent->id])
             ->withErrors('You Dont Have Enough Freeleech Tokens Or Already Have One Activated On This Torrent.');
     }
+
+
 }
