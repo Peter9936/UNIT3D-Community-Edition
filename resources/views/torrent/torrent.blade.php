@@ -77,7 +77,7 @@
                             </button>
                         @endif
 
-                        <a href="{{ route('comment_thanks', ['id' => $torrent->id]) }}" role="button" class="btn btn-labeled btn-primary">
+                        <a href="{{ route('comment_thanks', ['id' => $torrent->id]) }}" role="button" class="btn btn-labeled btn-warning">
                             <span class='btn-label'>
                                 <i class='{{ config("other.font-awesome") }} fa-heart'></i> @lang('torrent.quick-comment')
                             </span>
