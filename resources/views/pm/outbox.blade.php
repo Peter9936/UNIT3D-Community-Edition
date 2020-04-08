@@ -33,26 +33,26 @@
                         </div>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-condensed table-bordered table-striped table-hover">
+                        <table class="table table-condensed table-bordered table-striped table-hover mobile-table">
                             <thead>
                                 <tr>
-                                    <td class="col-sm-2">@lang('pm.to')</td>
-                                    <td class="col-sm-6">@lang('pm.subject')</td>
-                                    <td class="col-sm-2">@lang('pm.sent-at')</td>
-                                    <td class="col-sm-2">@lang('pm.delete')</td>
+                                    <td class="col-sm-2" scope="col">@lang('pm.to')</td>
+                                    <td class="col-sm-6" scope="col">@lang('pm.subject')</td>
+                                    <td class="col-sm-2" scope="col">@lang('pm.sent-at')</td>
+                                    <td class="col-sm-2" scope="col">@lang('pm.delete')</td>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($pms as $p)
                                     <tr>
-                                        <td class="col-sm-2"><a
-                                                href="{{ route('users.show', ['username' => $p->receiver->username]) }}">{{ $p->receiver->username }}</a>
+                                        <td class="col-sm-2" data-label="@lang('pm.from')">
+                                          <a href="{{ route('users.show', ['username' => $p->receiver->username]) }}">{{ $p->receiver->username }}</a>
                                         </td>
-                                        <td class="col-sm-5"><a
-                                                href="{{ route('message', ['id' => $p->id]) }}">{{ $p->subject }}</a>
+                                        <td class="col-sm-5" data-label="@lang('pm.subject')">
+                                          <a href="{{ route('message', ['id' => $p->id]) }}">{{ $p->subject }}</a>
                                         </td>
-                                        <td class="col-sm-2">{{ $p->created_at->diffForHumans() }}</td>
-                                        <td class="col-sm-2">
+                                        <td class="col-sm-2" data-label="@lang('pm.sent-at')">{{ $p->created_at->diffForHumans() }}</td>
+                                        <td class="col-sm-2" data-label="@lang('pm.delete')">
                                             <form role="form" method="POST" action="{{ route('delete-pm', ['id' => $p->id]) }}">
                                                 @csrf
                                                 <input type="hidden" name="dest" value="outbox" />

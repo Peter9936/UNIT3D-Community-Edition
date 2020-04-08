@@ -225,7 +225,8 @@
                         <td class="col-sm-2">
                             <strong>@lang('torrent.name')</strong>
                         </td>
-                        <td>{{ $torrent->name }} &nbsp; &nbsp;
+                        <td>
+                          <span class="d-inline-block">{{ $torrent->name }}</span> &nbsp; &nbsp;
                             @if (auth()->user()->group->is_modo || auth()->user()->id == $uploader->id)
                                 <a class="btn btn-warning btn-xs" href="{{ route('edit_form', ['id' => $torrent->id]) }}" role="button">
                                     <i class="{{ config('other.font-awesome') }} fa-pencil-alt"></i> @lang('common.edit')
@@ -260,7 +261,7 @@
                                     <i class="{{ config('other.font-awesome') }} fa-thumbs-down"></i> @lang('common.moderation-reject')
                                 </button>
 
-                                <span>
+                                <span class="d-inline-block">
                                     &nbsp;[ @lang('common.moderated-by')
                                     <a href="{{ route('users.show', ['username' => $torrent->moderated->username]) }}"
                                        style="color:{{ $torrent->moderated->group->color }};">
@@ -346,11 +347,13 @@
                                     @endif
                                 </span>
                             @else
-                                <a href="{{ route('users.show', ['username' => $uploader->username]) }}">
-                                    <span class="badge-user text-bold" style="color:{{ $uploader->group->color }}; background-image:{{ $uploader->group->effect }};">
-                                        <i class="{{ $uploader->group->icon }}" data-toggle="tooltip" data-original-title="{{ $uploader->group->name }}"></i> {{ $uploader->username }}
-                                    </span>
-                                </a>
+                                <span class="d-inline-block">
+                                  <a href="{{ route('users.show', ['username' => $uploader->username]) }}">
+                                      <span class="badge-user text-bold" style="color:{{ $uploader->group->color }}; background-image:{{ $uploader->group->effect }};">
+                                          <i class="{{ $uploader->group->icon }}" data-toggle="tooltip" data-original-title="{{ $uploader->group->name }}"></i> {{ $uploader->username }}
+                                      </span>
+                                  </a>
+                                </span>
                             @endif
 
                             @if ($torrent->anon !== 1 && $uploader->private_profile !== 1)
@@ -360,7 +363,7 @@
                                         @csrf
                                         @method('DELETE')
                                         <div class="form-group">
-                                        <button type="submit" id="delete-follow-{{ $uploader->target_id }}" class="btn btn-xs btn-info"
+                                        <button type="submit" id="delete-follow-{{ $uploader->target_id }}" class="btn btn-xs btn-info w-100"
                                                 title="@lang('user.unfollow')">
                                             <i class="{{ config('other.font-awesome') }} fa-user"></i> @lang('user.unfollow')
                                         </button>
@@ -371,7 +374,7 @@
                                           style="display: inline-block;" method="POST">
                                         @csrf
                                         <div class="form-group">
-                                        <button type="submit" id="follow-user-{{ $uploader->id }}" class="btn btn-xs btn-success"
+                                        <button type="submit" id="follow-user-{{ $uploader->id }}" class="btn btn-xs btn-success w-100"
                                                 title="@lang('user.follow')">
                                             <i class="{{ config('other.font-awesome') }} fa-user"></i> @lang('user.follow')
                                         </button>
@@ -576,7 +579,7 @@
                                     <br>
                                     <br>
                                     <div class="text-center">
-                                        <button class="show_hide btn btn-labeled btn-primary" href="#">
+                                        <button class="show_hide btn btn-labeled btn-primary show-mediainfo" href="#">
                                             <span class="btn-label">@emojione(':poop:')</span>{{ strtoupper(trans('torrent.original-output')) }}
                                         </button>
                                     </div>
@@ -637,19 +640,19 @@
                                     <br>
                                     <span class="text-green text-bold">@lang('torrent.quick-tip')</span>
                                     <br>
-                                    <button type="submit" value="10" name="tip" class="btn"><img
+                                    <button type="submit" value="10" name="tip" class="btn float-none"><img
                                                 src="/img/coins/10coin.png" alt="coin"/></button>
-                                    <button type="submit" value="20" name="tip" class="btn"><img
+                                    <button type="submit" value="20" name="tip" class="btn float-none"><img
                                                 src="/img/coins/20coin.png" alt="coin"/></button>
-                                    <button type="submit" value="50" name="tip" class="btn"><img
+                                    <button type="submit" value="50" name="tip" class="btn float-none"><img
                                                 src="/img/coins/50coin.png" alt="coin"/></button>
-                                    <button type="submit" value="100" name="tip" class="btn"><img
+                                    <button type="submit" value="100" name="tip" class="btn float-none"><img
                                                 src="/img/coins/100coin.png" alt="coin"/></button>
-                                    <button type="submit" value="200" name="tip" class="btn"><img
+                                    <button type="submit" value="200" name="tip" class="btn float-none"><img
                                                 src="/img/coins/200coin.png" alt="coin"/></button>
-                                    <button type="submit" value="500" name="tip" class="btn"><img
+                                    <button type="submit" value="500" name="tip" class="btn float-none"><img
                                                 src="/img/coins/500coin.png" alt="coin"/></button>
-                                    <button type="submit" value="1000" name="tip" class="btn"><img
+                                    <button type="submit" value="1000" name="tip" class="btn float-none"><img
                                                 src="/img/coins/1000coin.png" alt="coin"/></button>
                                 </form>
                             </div>

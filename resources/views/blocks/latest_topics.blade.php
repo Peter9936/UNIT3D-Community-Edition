@@ -5,33 +5,33 @@
             <h4><i class="{{ config('other.font-awesome') }} fa-list-alt"></i> @lang('blocks.latest-topics')</h4>
         </div>
         <div class="table-responsive">
-            <table class="table table-condensed table-striped table-bordered">
+            <table class="table table-condensed table-striped table-bordered mobile-table">
                 <thead>
                     <tr>
-                        <th class="torrents-filename">@lang('forum.forum')</th>
-                        <th class="torrents-filename">@lang('forum.topic')</th>
-                        <th>@lang('forum.author')</th>
-                        <th>@lang('forum.created')</th>
+                        <th class="torrents-filename" scope="col">@lang('forum.forum')</th>
+                        <th class="torrents-filename" scope="col">@lang('forum.topic')</th>
+                        <th scope="col">@lang('forum.author')</th>
+                        <th scope="col">@lang('forum.created')</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($topics as $topic)
                         @if ($topic->viewable())
                             <tr>
-                                <td>
+                                <td data-label="@lang('forum.forum')">
                                     <a href="{{ route('forums.show', ['id' => $topic->forum->id]) }}">
                                         {{ $topic->forum->name }}
                                     </a>
                                 </td>
-        
-                                <td>
+
+                                <td data-label="@lang('forum.topic')">
                                     <a href="{{ route('forum_topic', ['id' => $topic->id]) }}">
                                         {{ $topic->name }}
                                     </a>
                                 </td>
-        
-                                <td>{{ $topic->first_post_user_username }}</td>
-                                <td>{{ $topic->created_at->diffForHumans() }}</td>
+
+                                <td data-label="@lang('forum.author')">{{ $topic->first_post_user_username }}</td>
+                                <td data-label="@lang('forum.created')">{{ $topic->created_at->diffForHumans() }}</td>
                             </tr>
                         @endif
                     @endforeach
